@@ -151,7 +151,7 @@ def transferir():
 
 
 if __name__ == '__main__':
-    # Exibir o Caminho Absoluto usuarios.json
+    #Exibir o Caminho Absoluto usuarios.json
     caminho_usuarios_json = os.path.abspath("Backend/usuarios.json")
     print("Caminho absoluto do arquivo usuarios.json:", caminho_usuarios_json)
 
