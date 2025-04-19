@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Conta</title>
+    <link rel="stylesheet" href="./CSS/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Minha Conta</h1>
+        <div id="user-info"></div>
+
+        <button onclick="sacar()">Sacar</button>
+        <button onclick="depositar()">Depositar</button>
+        <button onclick="transferir()">Transferir</button>
+
+        <button id="logout-button" onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        //Função para Mostrar as Informações do Usuário no Dashboard
+        window.onload = function() {
+            const usuario = JSON.parse(localStorage.getItem('usuario'));
+    
+            if (usuario) {
+                atualizarDashboard(usuario);
+            } else {
+                window.location.href = 'login.html'; 
+            }
+        };
+    
+        function logout() {
+            //Limpa os Dados do Isuário armazenados no LocalStorage
+            localStorage.removeItem('usuario');
+            window.location.href = './login.html';
+        }
+    
+        //Função Sacar
+        function sacar() {
+            const usuario = JSON.parse(localStorage.getItem('usuario'));
+            const cpf = usuario.cpf;
+            const valor = parseFloat(prompt("Digite o valor a sacar:"));
+    
+            if (!valor || isNaN(valor) || valor <= 0) {
+                alert("Valor inválido!");
+                return;
+            }
+    
+            fetch('http://127.0.0.1:5000/sacar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ cpf, valor })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+    
+                if (data.saldo !== undefined) {
+                    usuario.saldo = data.saldo;
+                    usuario.extrato.push(`Saque de R$ ${valor.toFixed(2)}`);
+                    localStorage.setItem('usuario', JSON.stringify(usuario));
+    
+                    atualizarDashboard(usuario);
+                }
+            })
+            .catch(error => console.error('Erro:', error));
+        }
+    
+        //Função Depositar
+        function depositar() {
+            const usuario = JSON.parse(localStorage.getItem('usuario'));
+            const cpf = usuario.cpf; 
+            const valor = prompt("Digite o valor para depositar:");
+    
+            if (valor && !isNaN(valor) && valor > 0) {
+                const data = {
+                    cpf: cpf,
+                    valor: parseFloat(valor)
+                };
+    
+                fetch('http://127.0.0.1:5000/depositar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if (data.saldo !== undefined) {
+                        usuario.saldo = data.saldo;
+                        usuario.extrato.push(`Depósito de R$ ${valor}`);
+                        localStorage.setItem('usuario', JSON.stringify(usuario));
+                        atualizarDashboard(usuario); 
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            } else {
+                alert("Valor inválido!");
+            }
+        }
+    
+        
+        //Função Transferir
+        function transferir() {
+            const usuario = JSON.parse(localStorage.getItem("usuario"));
+            const cpf_origem = usuario.cpf;
+
+            const cpf_destino = prompt("Digite o CPF do destinatário:");
+            const valor = parseFloat(prompt("Digite o valor da transferência:"));
+
+            if (!cpf_destino || !valor || isNaN(valor) || valor <= 0) {
+                alert("Por favor, preencha todos os campos corretamente.");
+                return;
+            }
+
+            fetch("http://localhost:5000/transferir", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ cpf_origem, cpf_destino, valor }),
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.error || data.message?.includes("erro")) {
+                    alert(data.error || data.message);
+                } else {
+                    alert(data.message);
+
+                    // Atualizar Saldo e Extrato
+                    usuario.saldo = data.saldo_origem;
+                    usuario.extrato.push(`Transferência de R$${valor.toFixed(2)} para ${data.nome_destino}`);
+                    localStorage.setItem("usuario", JSON.stringify(usuario));
+
+                    atualizarDashboard(usuario);
+                }
+            })
+            .catch((error) => {
+                console.error("Erro ao transferir:", error);
+                alert("Erro ao realizar a transferência.");
+            });
+        }
+
+        //Função Mostrar o Extrato com base na quantidade
+        const mostrarExtrato = (itens, mostrarTudo) => {
+            const extratoFiltrado = mostrarTudo ? itens : itens.slice(-3);  //Mostrar os últimos 3 Itens ou Todos
+            return extratoFiltrado.map(item => {
+                const tipo = item.includes("Depósito") ? "deposito" :
+                            item.includes("Saque") ? "saque" :
+                            item.includes("Transferência") ? "transferencia" : "";
+                return `<div class="extrato-item ${tipo}">${item}</div>`;
+            }).join('');
+        };
+    
+        let verTudo = false; //Variável para Controlar a Visualização completa ou não do Extrato
+    
+        //Função Atualizar Dashboard
+        function atualizarDashboard(usuario) {
+            const userInfoDiv = document.getElementById('user-info');
+            const saldo = usuario.saldo.toFixed(2);
+    
+            userInfoDiv.innerHTML = `
+                <p><strong>Nome:</strong> ${usuario.nome}</p>
+                <p><strong>CPF:</strong> ${usuario.cpf}</p>
+                <p><strong>Saldo:</strong> R$ ${saldo}</p>
+                <p><strong>Extrato:</strong></p>
+                <div class="extrato-lista" id="extrato-lista">
+                    ${mostrarExtrato(usuario.extrato, verTudo)}
+                </div>
+                <button id="toggle-extrato">${verTudo ? "Ver menos" : "Ver mais"}</button>
+            `;
+    
+            document.getElementById("toggle-extrato").onclick = () => {
+                verTudo = !verTudo;
+                atualizarDashboard(usuario); 
+            };
+        }
+    </script>
+    
+</body>
+</html>

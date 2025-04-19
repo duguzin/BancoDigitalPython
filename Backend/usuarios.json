@@ -1,0 +1,42 @@
+{
+    "12345678911": {
+        "nome": "Gustavo Rodrigues",
+        "senha": "senha123",
+        "saldo": 0.0,
+        "extrato": [
+            "Cadastro realizado com sucesso."
+        ]
+    },
+    "12345678901": {
+        "nome": "Jo\u00e3o Silva",
+        "senha": "senha123",
+        "saldo": 0.0,
+        "extrato": [
+            "Cadastro realizado com sucesso."
+        ]
+    },
+    "12345678913": {
+        "nome": "Gustavo Dionizio",
+        "senha": "senha123",
+        "saldo": 0.0,
+        "extrato": [
+            "Cadastro realizado com sucesso."
+        ]
+    },
+    "12345678912": {
+        "nome": "Sandra Dionizio",
+        "senha": "senha123",
+        "saldo": 0.0,
+        "extrato": [
+            "Cadastro realizado com sucesso."
+        ]
+    },
+    "12345678914": {
+        "nome": "Beatriz Dionizio",
+        "senha": "senha123",
+        "saldo": 0.0,
+        "extrato": [
+            "Cadastro realizado com sucesso."
+        ]
+    }
+}
